@@ -14,10 +14,10 @@ $(document).ready(function (){
             var twHeight = 300;
             var twTop = (screen.height / 2) - (fbHeight / 2);
             var twLeft = (screen.width / 2) - fbWidth;
-            var twText = 'I stand with Frank Underwood www.FU2016.com';
-            var twHash = 'FU2016';
-            window.open('https://twitter.com/intent/tweet?text=' + twText + '&hashtags=' + twHash, 'sharer', 'top=' + twTop + ',left=' + twLeft + ',toolbar=0,status=0,width=' + twWidth + ',height=' + twHeight);            
-           break; 
-    } 
+            var twText = 'I stand with Mark Poulton mark-poulton.com';
+            var twHash = 'MP2016';
+            window.open('https://twitter.com/intent/tweet?text=' + twText + '&hashtags=' + twHash, 'sharer', 'top=' + twTop + ',left=' + twLeft + ',toolbar=0,status=0,width=' + twWidth + ',height=' + twHeight);
+           break;
+    }
    });
 });
