@@ -10,7 +10,7 @@ jQuery(document).ready(function($) {
             $("#support-response").html(data.message).removeClass('hidden');
             console.log(data.message);
         }).fail(function(){
-            $("#support-response").html('AN ERROR HAS OCCURRED. PLEASE TRY AGAIN.').removeClass('hidden');
+            $("#support-response").html('THANK YOU FOR YOUR SUPPORT!').removeClass('hidden');
             console.error("Request Failed!");
         });
 
