@@ -1,0 +1,40 @@
+var Maths;
+
+String.prototype.toTitleCase = function() {
+    return this.replace(/\w\S*/g, function(txt) {
+        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
+};
+
+String.prototype.contains = function(str) {
+    return this.indexOf(str) !== -1;
+};
+
+Maths = {
+    clamp: function(val, min, max) {
+        if (min == null) {
+            min = 0;
+        }
+        if (max == null) {
+            max = 1;
+        }
+        if (val > max) {
+            return max;
+        } else if (val < min) {
+            return min;
+        } else {
+            return val;
+        }
+    },
+    normalizeFromRange: function(val, min, max) {
+        return (val - min) / (max - min);
+    },
+    mapToRange: function(normalized, min, max) {
+        return min + (max - min) * normalized;
+    }
+};
+
+jQuery(window).load(function () {
+    //Lock the body for slow loading times to avoid the animations from starting without the images being loaded yet
+    jQuery('body').addClass('ready').removeClass('locked');
+});

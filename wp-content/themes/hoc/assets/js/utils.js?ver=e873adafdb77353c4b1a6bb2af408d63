@@ -1,0 +1,267 @@
+var timeOuts = [];
+var dragging = false;
+
+$.easing.jswing = $.easing.swing;
+$.extend($.easing,
+{
+    easeOutCubic: function (x, t, b, c, d) {
+        return c*((t=t/d-1)*t*t + 1) + b;
+    }
+});
+
+$(window).load(function(e){
+    //Always load the page at the top. Wait 1 second so the lock is removed and the scroll to top is not blocked
+    setTimeout(function(){
+        window.scrollTo(0, 0);
+    }, 1);
+
+    //Lock the body for slow loading times to avoid the animations from starting without the images being loaded yet
+    $('[data-target="lock"]').removeClass('locked');
+    $('body').addClass('ready')
+    if(window.location.hash){
+        setTimeout(function(){
+            setTimeout(function(){
+                $.scrollTo(window.location.hash, 1000, 
+                {
+                    offset: 0.5,
+                    easing: 'easeOutCubic',
+                });
+            }, 1);
+        },  500);
+    }
+});
+
+
+$(document).ready(function(){
+    var memeAnimStart = true,
+        memeDone = false
+
+    // Jump straight to meme and skip animation - currently disabled
+
+    //var loc = window.location.href.split('#');
+    //if (loc[1] === ('fu')) {
+    //    $('.meme-generator-slide .slide1').hide();
+    //    memeAnimStart = false;
+    //}
+
+    //Each time the site scrolls we need to go through each module to see which one we are positioned in so the slider menu knows which dot to toggle as the active one
+    $(window).on('scroll touchmove', function(e){
+        if(!$('body').hasClass('ready')){
+            e.preventDefault();
+            return;
+        }
+
+        $('.module').each(function(){
+            var start = $(this).position().top - $(window).scrollTop();
+            var end = ($(this).position().top + $(this).outerHeight()) - $(window).scrollTop();
+
+            if(start <= 0.5 && end >= 0.5){
+                $('[data-target="slider-menu"] a[href="#' + $(this).attr('id') + '"]').addClass('active');
+                $('[data-target="slider-menu"] a[href!="#' + $(this).attr('id') + '"]').removeClass('active');
+                return;
+            }
+        });
+
+        //Detect if the elements with the data-animation-trigger are visible on the screen to trigger their effects
+        $('[data-animation-trigger], [data-animation-trigger-small]').each(function(){
+            
+            var element = $(this);
+            if(!element.is('[data-animation-trigger-small]') || window.innerWidth <= 1200){
+                var windowHeight = $(window).height();
+                //Get 10% of the window height
+                var windowTop = windowHeight * .1;
+                //Get 90% of the window height
+                var windowBottom = windowHeight * .9
+                /*The element has an offset according to the top of the page. By substracting the 
+                current scroll we are getting the position in relation to the visible screen*/
+                var elementTop = element.offset().top - $(window).scrollTop();
+                //Add the height of the element to the element's top calculation to get the bottom boundary
+                var elementBottom = elementTop + element.outerHeight();
+
+                //If the element boundaries (the animation trigger element) are between the accepted range of visiblity
+                if(elementTop >= windowTop  && elementBottom <= windowBottom){
+                    
+                    //Validate that the timeout is not already defined and has already been triggered
+                    if(!timeOuts[element.attr('data-animation-trigger')] && timeOuts[element.attr('data-animation-trigger')] != 'done'){
+                        
+                        timeOuts[element.attr('data-animation-trigger')] = setTimeout(function(){
+                            //When the timeout expires add the trigger-animation class that elements can use for their effects and mark the animation as done to avoid repetition
+                            timeOuts[element.attr('data-animation-trigger')] = 'done';
+
+                            var memeStarted = false;
+                            if ($(element).is('#text-animation')  && memeAnimStart && !memeStarted) {
+                                console.log('starting anim');
+                                startSlidesAnimation();
+                                memeStarted = true;
+                            }
+                            if(!memeAnimStart && !memeDone){
+                                element.parents('.module:not("#fu")').addClass('trigger-animation');
+                                $('#fu').find('.slide1').fadeOut();
+                                showMemeGenerator();
+                                memeDone = true;
+                            } else {
+                                element.parents('.module').addClass('trigger-animation');
+                            }
+                        }, 500);
+                    }
+                }else{
+                    //Validate the trigger exists and hasn't been triggered
+                    if(timeOuts[element.attr('data-animation-trigger')] && timeOuts[element.attr('data-animation-trigger')] != 'done'){
+                        //Clear the timeout to avoid a trigger since the element lost focus of the screen and set the trigget item in the collection to false so it can be reaccesed
+                        clearTimeout(timeOuts[element.attr('data-animation-trigger')]);
+                        timeOuts[element.attr('data-animation-trigger')] = false;
+                    }
+                }
+            }
+        });
+
+        $('[data-target="immediate-animation"]:not(.trigger-immediate-animation)').each(function(){
+            var element = $(this);
+            var windowHeight = $(window).height();
+            var windowTop = -windowHeight * .2;
+            var windowBottom = windowHeight + (windowHeight * .1);
+            var elementTop = element.offset().top - $(window).scrollTop();
+            var elementBottom = elementTop + element.outerHeight();
+
+        if((elementTop >= windowTop  && elementBottom <= windowBottom)  || (windowHeight < $('body').height() && elementTop >= 0)){
+                element.addClass('trigger-immediate-animation');
+            }
+        });
+    });
+
+    //Scroll to functionality
+    $('body').on('click', '[data-action="scroll-to"]', function(e){
+        scrollToHandler(this, e);
+    });
+
+    $('body').on('keypress', '[data-action="scroll-to"]', function(e){
+        if(e.which == 32){
+            e.stopImmediatePropagation();
+            scrollToHandler(this, e);
+        }
+    });
+
+    //Remove the focus state on clickable elements to be able to have a "focused" style for accesibility without messing with the visual state of the site for normal users
+    $('body').on('click', '[data-focus-container] *, [data-focus]', function(e){
+        $(this).blur();
+    });
+
+    //Apple scroll prevention
+    $('body').on('touchmove', '[data-drag]', function(e){
+        if(isMobile.apple.device){
+            dragging = true;
+        }
+    });
+
+    $('body').on('touchstart', '[data-drag]', function(e){
+        if(isMobile.apple.device){
+            dragging = false;
+        }
+    });
+
+    $('body').on('touchend', '[data-drag]', function(e){
+        if(isMobile.apple.device && dragging){
+            e.preventDefault();
+        }
+    });
+
+    //Toggle site menu
+    $('[data-target="site-menu-toggle"]').on('click', function(){
+        // Store scroll if we are adding a lock
+        if(!$('html').hasClass('locked')) {
+            saveScollPause = true;
+            $(window).scrollTop(savedScrollPos);
+            $('html').css('top', '-' + savedScrollPos + 'px');
+        }
+
+        $('[data-target="site-menu"]').toggleClass('expanded');
+        $('[data-target="lock"]').toggleClass('locked', $('[data-target="site-menu"]').hasClass('expanded'));
+
+        // Restore scroll if lock was removed
+        if(!$('html').hasClass('locked')) {
+            $('html').removeAttr('style');
+            $(window).scrollTop(savedScrollPos);
+            saveScollPause = false;
+        }
+    });
+
+    $('main, [data-target="site-menu"] li').on('click', function(){
+        $('[data-target="site-menu"]').removeClass('expanded');
+        $('[data-target="lock"]').removeClass('locked');
+
+        // Remove lock scrollfix
+        $('html').removeAttr('style');
+        $(window).scrollTop(savedScrollPos);
+        saveScollPause = false;
+    });
+
+});
+
+function scrollToHandler(obj, e){
+    var scrollLink = $(obj);
+    //The scroll-to target might not be a link in which case the data attribute data-scroll will be expected
+    var scrollTarget = scrollLink.attr('href') || scrollLink.attr('data-scroll');
+
+    //If it's an element that reacts to something like a link its default behavior needs to be prevented
+    e.preventDefault();
+
+    if(scrollTarget){
+        //Specific functionality for the site's slider menu
+        if(scrollLink.is('[data-target="slider-menu"] a')){
+            /*Lock the slider so the only highlighted item is the one that was clicked.
+            The clicked class forces the highlight effect even though the module hasn't been reached with the scroll yet.
+            This clicked class is to avoid conflict with the scroll event validation which would immediately remove the highlight 
+            effect during all the scroll events triggered while the scroll animation works*/
+            $('[data-target="slider-menu"] a').not(scrollLink).addClass('locked');
+            scrollLink.addClass('clicked');
+            $.scrollTo(scrollTarget, 800, 
+            {
+                offset: 0.5, 
+                onAfter: function(){
+                    //Remove the lock and the clicked classes so the slider returns to it's normal functionality in the scroll event
+                    $('[data-target="slider-menu"] a').not(scrollLink).removeClass('locked');
+                    scrollLink.removeClass('clicked');
+                }
+            });
+        }else{
+            $.scrollTo(scrollTarget, 800, 
+            {
+                offset: 0.5
+            });
+        }
+    }
+}
+
+function detectBrowser() {
+    var _browser = {};
+
+    var uagent = navigator.userAgent.toLowerCase(),
+            match = '';
+
+    _browser.chrome  = /webkit/.test(uagent)  && /chrome/.test(uagent) && !/edge/.test(uagent);
+    _browser.firefox = /mozilla/.test(uagent) && /firefox/.test(uagent);
+    _browser.msie    = /msie/.test(uagent) || /trident/.test(uagent) || /edge/.test(uagent);
+    _browser.safari  = /safari/.test(uagent)  && /applewebkit/.test(uagent) && !/chrome/.test(uagent);
+    _browser.opr     = /mozilla/.test(uagent) && /applewebkit/.test(uagent) &&  /chrome/.test(uagent) && /safari/.test(uagent) && /opr/.test(uagent);
+    _browser.version = '';
+
+    for (x in _browser) {
+        if (x == 'version') continue;
+        if (_browser[x]) {
+
+            // microsoft is "special"
+            match = uagent.match(new RegExp("(" + (x === "msie" ? "msie|edge" : x) + ")( |\/)([0-9]+)"));
+
+            if (match) {
+                _browser.version = match[3];
+            } else {
+                match = uagent.match(new RegExp("rv:([0-9]+)"));
+                _browser.version = match ? match[1] : "";
+            }
+        }
+    }
+    _browser.opera = _browser.opr;
+    delete _browser.opr;
+
+    return _browser;
+}

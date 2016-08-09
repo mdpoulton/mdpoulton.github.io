@@ -1,0 +1,19 @@
+jQuery(document).ready(function($) {
+    $('form#newsletter-form').submit(function(e) {
+        e.preventDefault();
+
+        $.ajax({
+            method: "POST",
+            url: ajaxVars.ajax_url,
+            data: { nonce : ajaxVars.newsletter_nonce, action : 'newsletter_subscribe', email: $('#newsletter-form input[name="email"]').val() }
+        }).done(function(data){
+            $("#support-response").html(data.message).removeClass('hidden');
+            console.log(data.message);
+        }).fail(function(){
+            $("#support-response").html('AN ERROR HAS OCCURRED. PLEASE TRY AGAIN.').removeClass('hidden');
+            console.error("Request Failed!");
+        });
+
+        $("input[name=email]").val('');
+    });
+}(jQuery)); // end $(document).ready(function()

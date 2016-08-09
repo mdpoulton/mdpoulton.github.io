@@ -1,0 +1,85 @@
+$(document).ready(function(){
+    $('body').on('click', '[data-action="open-shadowbox"]', function(e){
+        var self = $(this);
+        saveScollPause = true;
+        $(window).scrollTop(savedScrollPos);
+
+        self.addClass('loading');
+        $.ajax({
+            url: 'wp-content/themes/hoc/assets/js/templates/' + self.attr('data-template') + '.hbs',
+            cache: true
+        }).done(function(data){
+            var template = Handlebars.compile(data);
+            $('[data-target="template-placeholder"]').html(template(getTemplateFields(self)));
+            setTimeout(function(){
+                $('[data-target="shadowbox"]').addClass('active ' + self.attr('data-theme'));
+                $('[data-target="site-menu"]').removeClass('expanded');
+                $('[data-target="lock"]').addClass('locked');
+                $('html').css('top', '-' + savedScrollPos + 'px');
+            }, 1);
+
+      supportDownloadAttr();
+
+        }).fail(function(){
+            console.error('Unable to load template ' + self.attr('data-template') + '.hbs');
+        });
+
+        return false;
+    });
+
+    $('body').on('click', '[data-action="close-shadowbox"]', function(){
+        $('[data-target="shadowbox"]').removeClass('active light dark');
+        $('[data-target="template-placeholder"]').empty();
+        $('[data-target="lock"]').removeClass('locked');
+        $('[data-action="open-shadowbox"].loading').removeClass('loading');
+        $('html').removeAttr('style');
+        $(window).scrollTop(savedScrollPos);
+        saveScollPause = false;
+
+        return false;
+    });
+
+    $('body').on('click', '[data-target="template-placeholder"]', function(e){
+        e.stopPropagation();
+    });
+});
+
+// Hacky fix to remember last scroll position, although saving it on click doesn't work properly in all browsers
+var savedScrollPos = 0;
+var saveScollPause = false;
+
+setInterval(function() {
+    if(!saveScollPause) savedScrollPos = $(window).scrollTop();
+}, 100);
+
+function getTemplateFields(element){
+    var data = $(element);
+
+    switch(data.attr('data-template')){
+        case 'youtube-video':
+            return getYouTubeVideoFields(data);
+        case 'news-details':
+            if(typeof(getNewsDetailsFields) !== 'function'){
+                return {};
+            }
+
+            return getNewsDetailsFields(data);
+        default:
+            return {};
+    }
+}
+
+function getYouTubeVideoFields(data){
+    return {
+        video: data.attr('data-video')
+    };
+};
+
+function supportDownloadAttr() {
+  $('a[download]').each(function () {
+    if (typeof $(this)[0].download == 'undefined') {
+      $(this).attr('target', '_blank')
+    }
+  });
+}
+

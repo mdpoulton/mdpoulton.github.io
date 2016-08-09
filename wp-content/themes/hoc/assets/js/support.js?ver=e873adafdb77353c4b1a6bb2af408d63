@@ -1,0 +1,23 @@
+$(document).ready(function (){
+   $('[data-action="support-share"]').click(function (){
+    switch($(this).attr('data-social')){
+        case 'facebook':
+            var fbWidth = 650;
+            var fbHeight = 300;
+            var fbTop = (screen.height / 2) - (fbHeight / 2);
+            var fbLeft = (screen.width / 2) - fbWidth;
+            var fbURL = window.location.protocol + '//' + window.location.hostname;
+            window.open('https://www.facebook.com/sharer.php?u=' + fbURL, 'sharer', 'top=' + fbTop + ',left=' + fbLeft + ',toolbar=0,status=0,width=' + fbWidth + ',height=' + fbHeight);
+            break;
+        case'twitter':
+            var twWidth = 650;
+            var twHeight = 300;
+            var twTop = (screen.height / 2) - (fbHeight / 2);
+            var twLeft = (screen.width / 2) - fbWidth;
+            var twText = 'I stand with Frank Underwood www.FU2016.com';
+            var twHash = 'FU2016';
+            window.open('https://twitter.com/intent/tweet?text=' + twText + '&hashtags=' + twHash, 'sharer', 'top=' + twTop + ',left=' + twLeft + ',toolbar=0,status=0,width=' + twWidth + ',height=' + twHeight);            
+           break; 
+    } 
+   });
+});

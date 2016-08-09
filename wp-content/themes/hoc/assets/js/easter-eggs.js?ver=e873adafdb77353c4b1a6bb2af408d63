@@ -1,0 +1,9 @@
+$(document).ready(function(){
+    $('[data-egg="intro"]').mouseover(function(){
+        $(this).parents('.module').addClass('watch-frank');
+    });
+
+    $('[data-egg="intro"]').mouseout(function(){
+        $(this).parents('.module').removeClass('watch-frank');
+    });
+});
